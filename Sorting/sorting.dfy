@@ -68,6 +68,10 @@ So what p checks is if the number of different animals in multiset a is
 the same as in multiset b
 
 
+
+
+
+FOR 3B, THINK ABOUT BUTTERFLIES EXISTS IN B IN A, EXISTS PREDICATE ETC 
 */
 
 
