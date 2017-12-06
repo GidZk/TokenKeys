@@ -2,7 +2,7 @@ datatype clearanceLevel = Low | Medium | High
 
 class Token {
 
-	var valifyer : bool
+    var valifyer : bool
 	var security_level : clearanceLevel;
 	var user_ID	: int
 	
@@ -36,12 +36,64 @@ valifyer := false;
 
 }
 
+}
 
 
 
 
+//================================= Class User  ===========================================
 
+
+class User{
+	var user_ID  	: int 
+	var token 		: Token
+
+	constructor(uID : int)
+    requires uID > 0
+	 ensures uID == uID
+	{
+		user_ID := uID;
+	}
+
+/*
+	method enroll()
+	requires token != null
+	ensures token.user_ID == user_ID
+	{
+
+*/
+
+
+	}
+
+
+
+//================================= Class Enrolmmentsys  ===========================================
+
+
+class EnrollmentSystem{
+  var maxUsers : int;
+  var userMap : map< int, Token>;
+
+	constructor(maxU : int)
+  requires maxUsers > 0
+  ensures maxUsers == maxU
+  ensures |userMap| == 0
+  {
+    maxUsers := maxU;
+    userMap :=map[];
+  }
 
 
 }
+
+
+
+
+
+
+
+
+
+
 
