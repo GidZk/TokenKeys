@@ -33,8 +33,8 @@ method invalidateToken()
 modifies this`valifyer
 requires  valifyer
 ensures  !valifyer 
-{
 
+{
 valifyer := false;
 }
 
@@ -82,7 +82,7 @@ method INIT()
 	modifies this`idCounter
 	modifies this`userSet
 		ensures userSet == {} && |userSet| == 0 
-		ensures idCounter == 0 
+		ensures idCounter == 0
   {
     userSet := {};
     idCounter := 0;
@@ -99,11 +99,18 @@ method register(user : User, cl : clearanceLevel)
 		{
 
 			userSet := userSet + {idCounter};
-			// write method for this
 			user.token  := new Token.INIT(idCounter, cl);
 			idCounter := idCounter + 1;
 
 		}
+
+
+//================================= Class ID STATION  ===========================================
+
+
+class IdStation{
+
+
 
 
 
@@ -119,3 +126,20 @@ method register(user : User, cl : clearanceLevel)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
