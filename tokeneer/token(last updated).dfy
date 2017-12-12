@@ -204,6 +204,7 @@ construct a fresh TokeneerSystem that
 */
 
 method INIT(cl : nat) 
+	modifies this
 	modifies this`doorOpen
 	modifies this`alarmRing
 	modifies this.idSt	
@@ -309,7 +310,19 @@ modifies t`valifyer
 
 
 
+class test{
 
+method Main(){
+
+var system := new TokeneerSystem.INIT(2);
+
+
+
+}
+
+
+
+}
 
 
 
