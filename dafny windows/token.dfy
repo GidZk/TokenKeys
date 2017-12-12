@@ -1,17 +1,20 @@
-datatype ClearanceLevel = LOW | MEDIUM | HIGH
 
 class Token {
 
+
+
+
     var valifyer : bool;
-	var clearance_level : ClearanceLevel;
+	var clearance_level : nat;
 	var user_ID	: nat;
 	
+	
 
-
-method INIT (id : nat, sec_lvl : ClearanceLevel)
+method INIT (id : nat, sec_lvl : nat)
 modifies this`valifyer
 modifies this`user_ID
 modifies this`clearance_level
+requires 1 <= sec_lvl <= 3
 ensures 		valifyer 
 			&&  user_ID == id 
 			&&  clearance_level == sec_lvl
@@ -28,6 +31,8 @@ requires : that this current token already is valid
 ensures  : that the current token is invalid
 */
 
+
+
 method invalidateToken()
 modifies this`valifyer
 requires  valifyer
@@ -41,7 +46,7 @@ valifyer := false;
 
 
 //================================= Class User  ===========================================
-
+/*
 
 class User{
 	var token 		: Token
@@ -58,7 +63,7 @@ class User{
 
 	}
 
-
+	*/
 //================================= Class Enrolmmentsys  ===========================================
 
 
@@ -85,19 +90,19 @@ method INIT()
     idCounter := 0;
   }
 
-method register(user : User, cl : ClearanceLevel)
+method register(cl : nat) returns (token : Token)
 	modifies this`userSet
 	modifies this`idCounter
-	modifies user`token, user.token
-		requires user != null
+		
 		requires 	Valid_Enrollment()
-		requires (cl == LOW) || (cl == MEDIUM) ||(cl == HIGH)
+		requires  1 <= cl <= 3
 		ensures 	Valid_Enrollment()
+		ensures old(idCounter) in userSet
 		ensures old(idCounter)  == idCounter - 1 
 		{
 
 			userSet := userSet + {idCounter};
-			user.token  := new Token.INIT(idCounter, cl);
+			token  := new Token.INIT(idCounter, cl);
 			idCounter := idCounter + 1;
 
 		}
@@ -116,18 +121,13 @@ There are three different types of ID one that validate to HIGH security, one to
 **/
 
 class IDStation{
-var authication_level : ClearanceLevel
-predicate activeIDStation()
-reads this`authication_level
-{
-	(authication_level == LOW) || (authication_level == MEDIUM) ||(authication_level == HIGH)
-}
+var authication_level : nat
 
-method INIT(auth_level : ClearanceLevel)
+method INIT(auth_level : nat)
 	
 	modifies this`authication_level
+		requires  1 <= auth_level <= 3
 		ensures authication_level == auth_level
-		ensures activeIDStation()
 			{
 	authication_level := auth_level;
 }
@@ -137,9 +137,9 @@ method INIT(auth_level : ClearanceLevel)
 /**
  returns a bool that is connected to the supersystem, 
 
-
- NOTE TO SUPERVISOR  : : token == null returns false, invalidate token. I wanted this to happend, but did not 
-																		know how , so had to require nonNull
+ NOTE TO SUPERVISOR  : if the input token is null, then I wanted to invalidate the token, but I could not make it compile at all.
+ so instead I chose to change the design of the method to: e to require a non-null token from the user;
+ that is that the user ALREADY has enrolled to the system and recieved a valid token with a ID number
 
  if isValid == true: user will be granted permission to enter the system
 			== false users token will be invalidated, alarm will sound and the doors too system will be shut.
@@ -148,24 +148,24 @@ method INIT(auth_level : ClearanceLevel)
 The input value of auth_level, will set the classes current level to that level via setClearanceLevel
 			CONDITIONS:
 
-requires: a Natural number as ID
-requires: a valid autication level
-requires a nonnull token
+				requires: a Natural number as ID
+				requires: a valid autication level
+				requires a nonnull token
 
-ensures	: if userID != token.userID,					return false, invalidate token
-		: token.clearanceLevel =!	auth_level			returns false, invaldatetoken
-		:												auth_level == this.authicationLevel
+				ensures	: if userID != token.userID or token.clearanceLevel <=	auth_level					return false, invalidate token
+		:						returns false, invaldatetoken
+		:				token.clearanceLevel >=	auth_level													return true
 
 **/
 method openDoor(userID : nat, token : Token) returns (isAuthenticated : bool)
 	modifies this`authication_level
-	
+	requires 1<= authication_level <=3
     requires token != null
 		requires userID >= 0
-		ensures		(userID == token.user_ID) &&	(authication_level == token.clearance_level)  <==> isAuthenticated
+		ensures		(userID == token.user_ID) &&(token.clearance_level  >= authication_level )  <==> isAuthenticated
 {	
 
-	  isAuthenticated := (userID == token.user_ID) && authication_level == token.clearance_level;
+	  isAuthenticated := (userID == token.user_ID) && token.clearance_level  >= authication_level ;
   return isAuthenticated;
   }
 
@@ -180,10 +180,8 @@ var doorOpen : bool;
 var alarmRing : bool;
 var idSt : IDStation;
 var enrollst: EnrollmentStation;
-var user : User
 
-
-predicate Valid()
+predicate StationsRunning()
 	reads this.idSt;
 	reads this`idSt;
 	reads this.enrollst
@@ -205,7 +203,7 @@ predicate Applicable()
 construct a fresh TokeneerSystem that 
 */
 
-method INIT(cl : ClearanceLevel) 
+method INIT(cl : nat) 
 	modifies this`doorOpen
 	modifies this`alarmRing
 	modifies this.idSt	
@@ -214,9 +212,9 @@ method INIT(cl : ClearanceLevel)
 	modifies this`enrollst
 	
 
-		requires (cl == LOW) || (cl == MEDIUM) ||(cl == HIGH)
+		requires 1 <= cl <= 3
 		ensures Applicable()
-		ensures Valid()
+		ensures StationsRunning()
 
 {
 	doorOpen := false;
@@ -232,21 +230,17 @@ a user enrolls: it's token must either be null or not have a valid token
 
 **/
 
-method enroll (u : User, cl : ClearanceLevel)
+method enroll ( cl : nat) returns (token : Token)
 modifies this.enrollst, this.enrollst`idCounter
-modifies u.token
-modifies u`token
 modifies this`enrollst
 
-	requires u != null
-	requires u.token == null
-	requires  (cl == LOW) || (cl == MEDIUM) ||(cl == HIGH)
-	requires Valid();
+	requires 1 <= cl <= 3
+	requires StationsRunning();
 
-	ensures Valid()
+	ensures StationsRunning()
 	ensures old(doorOpen) == doorOpen && old (alarmRing) == alarmRing
 {
-	enrollst.register(u,cl);
+	token := enrollst.register(cl);
 }
 
 /*
@@ -268,7 +262,6 @@ Checks that users token and opens the door if both userID and tokenID is the sam
 	ensures:	inputID != tokenID
 				OR	
 				userClearanceLevel != enrollmentc			thne openDoor = false, alarmRing = true
-
 				door closes, alarm goes off
 
 
@@ -278,23 +271,22 @@ modifies this`alarmRing
 modifies this`doorOpen
 modifies this.idSt, this`idSt
 modifies t
-modifies t`user_ID
+modifies t`valifyer
 
-	requires Valid()
-	requires id >= 0
+	requires StationsRunning()
+	requires 1 <= id <= 3
 	requires t != null
 	requires t.valifyer
 	requires idSt != null
-	requires (idSt.authication_level == LOW) ||  (idSt.authication_level == MEDIUM) || (idSt.authication_level == HIGH)
-	
+	requires 1 >= idSt.authication_level >= 3 	// setting the range for ClearanceLevel
 		
-		ensures Valid()
-		ensures (t.user_ID == id  && t.clearance_level == idSt.authication_level) ==> (!alarmRing && doorOpen)
-		ensures (t.user_ID != id || t.clearance_level != idSt.authication_level) <==> !doorOpen && !t.valifyer && alarmRing
+		ensures StationsRunning()
+		ensures (old(t.user_ID) == id  && old(t.clearance_level) >= idSt.authication_level) ==> (!alarmRing && doorOpen)
+		ensures (old(t.user_ID) != id || old(t.clearance_level) <= old(idSt.authication_level)) <==> !doorOpen && !t.valifyer && alarmRing
 {
 		
 		//wanted to use method idStn.openDoor, but seems like that cant be done in dafny....
-		if (t.user_ID == id  && t.clearance_level == idSt.authication_level){
+		if (t.user_ID == id  && t.clearance_level >= idSt.authication_level){
 
 		alarmRing := false;
 		doorOpen := true;
@@ -308,16 +300,8 @@ modifies t`user_ID
 }
 
 
+
 }
-
-
-
-
-
-
-
-
-
 
 
 

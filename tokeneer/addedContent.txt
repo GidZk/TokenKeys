@@ -1,0 +1,31 @@
+
+added :
+
+in enrollsys.register
+ensures old(idCounter) in userSet
+
+
+changes :
+changed the level of authorization to be represented as nat in the range of
+{1..3}, did not know how to evaluate my own dataType.
+
+
+removed  User class, and made the method involving user and token return a token to the client
+
+NOTE TO SUPERVISOR  : if the input token is null, then I wanted to invalidate the token, but I could not make it compile at all.
+so instead I chose to change the design of the method to: e to require a non-null token from the user;
+that is that the user ALREADY has enrolled to the system and recieved a valid token with a ID number as
+requirement for the method.
+
+
+ensures clauses of validateUser in Systemclass to depend on the input values since the are mutable in the method.
+
+ensures (old(t.user_ID) != id || old(t.clearance_level) <= old(idSt.authication_level)) <==> !doorOpen && !t.valifyer && alarmRing
+ensures (old(t.user_ID) == id  && old(t.clearance_level) >= idSt.authication_level) ==> (!alarmRing && doorOpen)
+
+
+
+if (idSt.openDoor) gives me the error "expression is not allowed to invoke method"
+I guess this can be changed by making openDoor immutable; a function- method. But since I found the equivalent
+boolean expression in the if statement, I'll rather keep it that way. (because it works, and I like when stuff works in dafny, it's \
+                                                                        a pretty rare thing :)  )
